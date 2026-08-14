@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrheniusRate } from "./model";
+import { arrheniusRate, starterFactor } from "./model";
 
 describe("arrheniusRate", () => {
   it("is 1.0 at the reference temperature (25°C)", () => {
@@ -12,5 +12,12 @@ describe("arrheniusRate", () => {
 
   it("is below 0.5 at 15°C", () => {
     expect(arrheniusRate(15)).toBeLessThan(0.5);
+  });
+});
+
+describe("starterFactor", () => {
+  it("is monotonic in starter percentage", () => {
+    expect(starterFactor(10)).toBeLessThan(starterFactor(20));
+    expect(starterFactor(20)).toBeLessThan(starterFactor(40));
   });
 });
