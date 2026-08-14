@@ -7,6 +7,11 @@ import {
   TARGET_UNITS_MAX,
   TARGET_UNITS_MIN,
   TARGET_UNITS_SLOPE_PER_PH,
+  SAFE_FLOOR_INPUT_MAX_C,
+  SAFE_FLOOR_INPUT_MIN_C,
+  SAFE_FLOOR_MAX_PCT,
+  SAFE_FLOOR_MIN_PCT,
+  SAFE_FLOOR_SPAN_C,
 } from "./constants";
 
 function kelvin(tempC: number): number {
@@ -30,4 +35,14 @@ export function targetUnits(pH: number): number {
     TARGET_UNITS_MAX,
     Math.max(TARGET_UNITS_MIN, TARGET_UNITS_INTERCEPT - TARGET_UNITS_SLOPE_PER_PH * pH),
   );
+}
+
+export function safeFloorPct(coldestForecastC: number): number {
+  const clampedC = Math.min(
+    SAFE_FLOOR_INPUT_MAX_C,
+    Math.max(SAFE_FLOOR_INPUT_MIN_C, coldestForecastC),
+  );
+  const fraction = (clampedC - SAFE_FLOOR_INPUT_MIN_C) / SAFE_FLOOR_SPAN_C;
+  const pct = SAFE_FLOOR_MAX_PCT - SAFE_FLOOR_MIN_PCT * fraction;
+  return Math.min(SAFE_FLOOR_MAX_PCT, Math.max(SAFE_FLOOR_MIN_PCT, pct));
 }

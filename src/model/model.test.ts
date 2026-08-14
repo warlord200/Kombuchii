@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrheniusRate, starterFactor, targetUnits } from "./model";
+import { arrheniusRate, safeFloorPct, starterFactor, targetUnits } from "./model";
 
 describe("arrheniusRate", () => {
   it("is 1.0 at the reference temperature (25°C)", () => {
@@ -33,5 +33,23 @@ describe("targetUnits", () => {
 
   it("maps pH 3.5 to the 7.5 lower clamp", () => {
     expect(targetUnits(3.5)).toBe(7.5);
+  });
+});
+
+describe("safeFloorPct", () => {
+  it("is 15% at 24°C", () => {
+    expect(safeFloorPct(24)).toBe(15);
+  });
+
+  it("is 30% at 20°C", () => {
+    expect(safeFloorPct(20)).toBe(30);
+  });
+
+  it("interpolates to 22.5% at 22°C", () => {
+    expect(safeFloorPct(22)).toBe(22.5);
+  });
+
+  it("clamps warm temperatures to 15%", () => {
+    expect(safeFloorPct(30)).toBe(15);
   });
 });
