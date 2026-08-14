@@ -3,6 +3,10 @@ import {
   GAS_CONSTANT_R_J_PER_MOL_K,
   REFERENCE_TEMP_K,
   STARTER_FACTOR_REFERENCE_PCT,
+  TARGET_UNITS_INTERCEPT,
+  TARGET_UNITS_MAX,
+  TARGET_UNITS_MIN,
+  TARGET_UNITS_SLOPE_PER_PH,
 } from "./constants";
 
 function kelvin(tempC: number): number {
@@ -19,4 +23,11 @@ export function arrheniusRate(tempC: number): number {
 
 export function starterFactor(starterPct: number): number {
   return Math.sqrt(starterPct / STARTER_FACTOR_REFERENCE_PCT);
+}
+
+export function targetUnits(pH: number): number {
+  return Math.min(
+    TARGET_UNITS_MAX,
+    Math.max(TARGET_UNITS_MIN, TARGET_UNITS_INTERCEPT - TARGET_UNITS_SLOPE_PER_PH * pH),
+  );
 }

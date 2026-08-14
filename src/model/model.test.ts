@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { arrheniusRate, starterFactor } from "./model";
+import { arrheniusRate, starterFactor, targetUnits } from "./model";
 
 describe("arrheniusRate", () => {
   it("is 1.0 at the reference temperature (25°C)", () => {
@@ -19,5 +19,19 @@ describe("starterFactor", () => {
   it("is monotonic in starter percentage", () => {
     expect(starterFactor(10)).toBeLessThan(starterFactor(20));
     expect(starterFactor(20)).toBeLessThan(starterFactor(40));
+  });
+});
+
+describe("targetUnits", () => {
+  it("maps pH 3.0 to 10 units", () => {
+    expect(targetUnits(3.0)).toBe(10);
+  });
+
+  it("maps pH 2.5 to the 12.5 upper clamp", () => {
+    expect(targetUnits(2.5)).toBe(12.5);
+  });
+
+  it("maps pH 3.5 to the 7.5 lower clamp", () => {
+    expect(targetUnits(3.5)).toBe(7.5);
   });
 });
