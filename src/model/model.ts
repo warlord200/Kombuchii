@@ -1,6 +1,7 @@
 import {
   ARRHENIUS_EA_J_PER_MOL,
   GAS_CONSTANT_R_J_PER_MOL_K,
+  KELVIN_OFFSET,
   REFERENCE_TEMP_K,
   STARTER_FACTOR_REFERENCE_PCT,
   TARGET_UNITS_INTERCEPT,
@@ -15,7 +16,7 @@ import {
 } from "./constants";
 
 function kelvin(tempC: number): number {
-  return tempC + 273.15;
+  return tempC + KELVIN_OFFSET;
 }
 
 export function arrheniusRate(tempC: number): number {
@@ -43,7 +44,8 @@ export function safeFloorPct(coldestForecastC: number): number {
     Math.max(SAFE_FLOOR_INPUT_MIN_C, coldestForecastC),
   );
   const fraction = (clampedC - SAFE_FLOOR_INPUT_MIN_C) / SAFE_FLOOR_SPAN_C;
-  const pct = SAFE_FLOOR_MAX_PCT - SAFE_FLOOR_MIN_PCT * fraction;
+  const pct =
+    SAFE_FLOOR_MAX_PCT - (SAFE_FLOOR_MAX_PCT - SAFE_FLOOR_MIN_PCT) * fraction;
   return Math.min(SAFE_FLOOR_MAX_PCT, Math.max(SAFE_FLOOR_MIN_PCT, pct));
 }
 
