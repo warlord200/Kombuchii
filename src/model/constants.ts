@@ -22,3 +22,6 @@ export const NOMINAL_TEMP_BAND_C = 0;
 export const DEFAULT_MAX_HORIZON_DAYS = 120;
 export const F2_OFFSET_DAYS = 2;
 
+export const MOST_YIELD_FLOOR_PCT = 10;
+export const RISK_MEDIUM_BAND_PP = 5;
+

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   arrheniusRate,
   completionDate,
+  predictBatch,
   roomTemp,
   safeFloorPct,
   starterFactor,
@@ -21,6 +22,13 @@ function makeDays(tempByDay: Record<number, number>, length = 25): DayTemp[] {
   return Array.from({ length }, (_, i) => ({
     date: addDays(START, i),
     tempC: tempByDay[i] ?? 25,
+  }));
+}
+
+function makeConstantDays(tempC: number, length = 25): DayTemp[] {
+  return Array.from({ length }, (_, i) => ({
+    date: addDays(START, i),
+    tempC,
   }));
 }
 
@@ -149,5 +157,59 @@ describe("completionDate", () => {
     const width = (r: ReturnType<typeof completionDate>) =>
       new Date(r.window.latest!).getTime() - new Date(r.window.earliest!).getTime();
     expect(width(short)).toBeLessThan(width(long));
+  });
+});
+
+describe("predictBatch", () => {
+  const input22 = (starterVolumeL: number) => ({
+    totalVolumeL: 1,
+    starterVolumeL,
+    startDate: START,
+    roomOffsetC: 0,
+    targetPh: 3.0,
+    days: makeConstantDays(22),
+  });
+
+  it("returns one scenario each for chosen, safest, and most-yield", () => {
+    const result = predictBatch(input22(0.15));
+    expect(result.map((s) => s.label)).toEqual(["chosen", "safest", "most-yield"]);
+  });
+
+  it("sizes each scenario's starter from the entered amount, safe floor, and 10% floor", () => {
+    const result = predictBatch(input22(0.15));
+    expect(result[0].starterVolumeL).toBeCloseTo(0.15, 5);
+    expect(result[0].starterPct).toBeCloseTo(15, 5);
+    expect(result[1].starterVolumeL).toBeCloseTo(0.225, 5);
+    expect(result[1].starterPct).toBeCloseTo(22.5, 5);
+    expect(result[2].starterVolumeL).toBeCloseTo(0.1, 5);
+    expect(result[2].starterPct).toBeCloseTo(10, 5);
+  });
+
+  it("gives most-yield the most drinkable volume (total − starter)", () => {
+    const result = predictBatch(input22(0.15));
+    const [chosen, safest, mostYield] = result;
+    expect(chosen.drinkableVolumeL).toBeCloseTo(0.85, 5);
+    expect(safest.drinkableVolumeL).toBeCloseTo(0.775, 5);
+    expect(mostYield.drinkableVolumeL).toBeCloseTo(0.9, 5);
+    expect(mostYield.drinkableVolumeL).toBeGreaterThan(chosen.drinkableVolumeL);
+    expect(mostYield.drinkableVolumeL).toBeGreaterThan(safest.drinkableVolumeL);
+  });
+
+  it("ranks mold risk high below the safe floor, medium within 5pp, low above", () => {
+    const low = predictBatch(input22(0.3));
+    const medium = predictBatch(input22(0.22));
+    const high = predictBatch(input22(0.15));
+    expect(low[0].moldRisk).toBe("low");
+    expect(medium[0].moldRisk).toBe("medium");
+    expect(high[0].moldRisk).toBe("high");
+  });
+
+  it("completes the safest scenario no later than chosen at a higher starter", () => {
+    const result = predictBatch(input22(0.15));
+    const [chosen, safest] = result;
+    expect(safest.starterPct).toBeGreaterThan(chosen.starterPct);
+    expect(safest.f1Done).not.toBeNull();
+    expect(chosen.f1Done).not.toBeNull();
+    expect(safest.f1Done! <= chosen.f1Done!).toBe(true);
   });
 });

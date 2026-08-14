@@ -17,6 +17,8 @@ import {
   DEFAULT_MAX_HORIZON_DAYS,
   F2_OFFSET_DAYS,
   NOMINAL_TEMP_BAND_C,
+  MOST_YIELD_FLOOR_PCT,
+  RISK_MEDIUM_BAND_PP,
 } from "./constants";
 
 function kelvin(tempC: number): number {
@@ -55,6 +57,10 @@ export function safeFloorPct(coldestForecastC: number): number {
 
 export function roomTemp(outdoorC: number, roomOffsetC: number): number {
   return outdoorC - roomOffsetC;
+}
+
+export function coldestTempC(days: DayTemp[]): number {
+  return Math.min(...days.map((d) => d.tempC));
 }
 
 export interface DayTemp {
@@ -134,4 +140,78 @@ export function completionDate(params: CompletionDateParams): CompletionResult {
       latest: simulateF1At(simulateParams(params, -tempBandC, maxHorizonDays)),
     },
   };
+}
+
+export type ScenarioLabel = "chosen" | "safest" | "most-yield";
+export type MoldRisk = "low" | "medium" | "high";
+
+export interface BatchInput {
+  totalVolumeL: number;
+  starterVolumeL: number;
+  startDate: string;
+  roomOffsetC: number;
+  targetPh: number;
+  days: DayTemp[];
+}
+
+export interface Scenario {
+  label: ScenarioLabel;
+  starterVolumeL: number;
+  starterPct: number;
+  drinkableVolumeL: number;
+  f1Done: string | null;
+  f2Done: string | null;
+  window: { earliest: string | null; latest: string | null };
+  moldRisk: MoldRisk;
+}
+
+export function moldRisk(starterPct: number, safeFloorPctValue: number): MoldRisk {
+  if (starterPct < safeFloorPctValue - RISK_MEDIUM_BAND_PP) return "high";
+  if (starterPct < safeFloorPctValue) return "medium";
+  return "low";
+}
+
+function buildScenario(
+  input: BatchInput,
+  label: ScenarioLabel,
+  starterVolumeL: number,
+  safeFloorPctValue: number,
+): Scenario {
+  const starterPct = (starterVolumeL / input.totalVolumeL) * 100;
+  const completion = completionDate({
+    startDate: input.startDate,
+    days: input.days,
+    starterPct,
+    roomOffsetC: input.roomOffsetC,
+    targetPh: input.targetPh,
+  });
+  return {
+    label,
+    starterVolumeL,
+    starterPct,
+    drinkableVolumeL: input.totalVolumeL - starterVolumeL,
+    f1Done: completion.f1Done,
+    f2Done: completion.f2Done,
+    window: completion.window,
+    moldRisk: moldRisk(starterPct, safeFloorPctValue),
+  };
+}
+
+export function predictBatch(input: BatchInput): Scenario[] {
+  const safeFloorPctValue = safeFloorPct(coldestTempC(input.days));
+  return [
+    buildScenario(input, "chosen", input.starterVolumeL, safeFloorPctValue),
+    buildScenario(
+      input,
+      "safest",
+      (input.totalVolumeL * safeFloorPctValue) / 100,
+      safeFloorPctValue,
+    ),
+    buildScenario(
+      input,
+      "most-yield",
+      (input.totalVolumeL * MOST_YIELD_FLOOR_PCT) / 100,
+      safeFloorPctValue,
+    ),
+  ];
 }
