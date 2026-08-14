@@ -16,6 +16,7 @@ import {
   DEFAULT_TEMP_BAND_C,
   DEFAULT_MAX_HORIZON_DAYS,
   F2_OFFSET_DAYS,
+  NOMINAL_TEMP_BAND_C,
 } from "./constants";
 
 function kelvin(tempC: number): number {
@@ -61,6 +62,16 @@ export interface DayTemp {
   tempC: number;
 }
 
+export interface CompletionDateParams {
+  startDate: string;
+  days: DayTemp[];
+  starterPct: number;
+  roomOffsetC: number;
+  targetPh: number;
+  tempBandC?: number;
+  maxHorizonDays?: number;
+}
+
 export interface CompletionResult {
   f1Done: string | null;
   f2Done: string | null;
@@ -73,7 +84,7 @@ function addDaysISO(date: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function simulateF1(params: {
+interface SimulateParams {
   startDate: string;
   days: DayTemp[];
   starterPct: number;
@@ -81,7 +92,9 @@ function simulateF1(params: {
   targetPh: number;
   tempBandC: number;
   maxHorizonDays: number;
-}): string | null {
+}
+
+function simulateF1At(params: SimulateParams): string | null {
   const target = targetUnits(params.targetPh);
   const factor = starterFactor(params.starterPct);
   const lastTemp = params.days.length > 0 ? params.days[params.days.length - 1].tempC : null;
@@ -97,24 +110,28 @@ function simulateF1(params: {
   return null;
 }
 
-export function completionDate(params: {
-  startDate: string;
-  days: DayTemp[];
-  starterPct: number;
-  roomOffsetC: number;
-  targetPh: number;
-  tempBandC?: number;
-  maxHorizonDays?: number;
-}): CompletionResult {
+function simulateParams(params: CompletionDateParams, tempBandC: number, maxHorizonDays: number): SimulateParams {
+  return {
+    startDate: params.startDate,
+    days: params.days,
+    starterPct: params.starterPct,
+    roomOffsetC: params.roomOffsetC,
+    targetPh: params.targetPh,
+    tempBandC,
+    maxHorizonDays,
+  };
+}
+
+export function completionDate(params: CompletionDateParams): CompletionResult {
   const tempBandC = params.tempBandC ?? DEFAULT_TEMP_BAND_C;
   const maxHorizonDays = params.maxHorizonDays ?? DEFAULT_MAX_HORIZON_DAYS;
-  const f1Done = simulateF1({ ...params, tempBandC: 0, maxHorizonDays });
+  const f1Done = simulateF1At(simulateParams(params, NOMINAL_TEMP_BAND_C, maxHorizonDays));
   return {
     f1Done,
     f2Done: f1Done === null ? null : addDaysISO(f1Done, F2_OFFSET_DAYS),
     window: {
-      earliest: simulateF1({ ...params, tempBandC, maxHorizonDays }),
-      latest: simulateF1({ ...params, tempBandC: -tempBandC, maxHorizonDays }),
+      earliest: simulateF1At(simulateParams(params, tempBandC, maxHorizonDays)),
+      latest: simulateF1At(simulateParams(params, -tempBandC, maxHorizonDays)),
     },
   };
 }
