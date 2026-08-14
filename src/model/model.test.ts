@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { arrheniusRate, safeFloorPct, starterFactor, targetUnits } from "./model";
+import {
+  arrheniusRate,
+  roomTemp,
+  safeFloorPct,
+  starterFactor,
+  targetUnits,
+} from "./model";
 
 describe("arrheniusRate", () => {
   it("is 1.0 at the reference temperature (25°C)", () => {
@@ -51,5 +57,11 @@ describe("safeFloorPct", () => {
 
   it("clamps warm temperatures to 15%", () => {
     expect(safeFloorPct(30)).toBe(15);
+  });
+});
+
+describe("roomTemp", () => {
+  it("subtracts the room offset from the outdoor temperature", () => {
+    expect(roomTemp(25, 3)).toBe(22);
   });
 });

@@ -46,3 +46,7 @@ export function safeFloorPct(coldestForecastC: number): number {
   const pct = SAFE_FLOOR_MAX_PCT - SAFE_FLOOR_MIN_PCT * fraction;
   return Math.min(SAFE_FLOOR_MAX_PCT, Math.max(SAFE_FLOOR_MIN_PCT, pct));
 }
+
+export function roomTemp(outdoorC: number, roomOffsetC: number): number {
+  return outdoorC - roomOffsetC;
+}
