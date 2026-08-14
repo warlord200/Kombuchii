@@ -112,6 +112,9 @@ export function completionDate(params: {
   return {
     f1Done,
     f2Done: f1Done === null ? null : addDaysISO(f1Done, F2_OFFSET_DAYS),
-    window: { earliest: null, latest: null },
+    window: {
+      earliest: simulateF1({ ...params, tempBandC, maxHorizonDays }),
+      latest: simulateF1({ ...params, tempBandC: -tempBandC, maxHorizonDays }),
+    },
   };
 }

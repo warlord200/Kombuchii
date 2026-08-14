@@ -126,4 +126,28 @@ describe("completionDate", () => {
     expect(result.f1Done).toBeNull();
     expect(result.f2Done).toBeNull();
   });
+
+  it("applies the temperature band to widen the completion window", () => {
+    const days = makeDays({});
+    const result = completionDate({ ...base, days });
+    expect(result.window.earliest).not.toBeNull();
+    expect(result.window.latest).not.toBeNull();
+    expect(result.window.earliest! < result.f1Done!).toBe(true);
+    expect(result.window.latest! > result.f1Done!).toBe(true);
+  });
+
+  it("produces a zero-width window when the band is 0", () => {
+    const days = makeDays({});
+    const result = completionDate({ ...base, days, tempBandC: 0 });
+    expect(result.window.earliest).toBe(result.f1Done);
+    expect(result.window.latest).toBe(result.f1Done);
+  });
+
+  it("narrows the window with a shorter remaining horizon", () => {
+    const long = completionDate({ ...base, days: makeDays({}) });
+    const short = completionDate({ ...base, days: makeDays({}, 5) });
+    const width = (r: ReturnType<typeof completionDate>) =>
+      new Date(r.window.latest!).getTime() - new Date(r.window.earliest!).getTime();
+    expect(width(short)).toBeLessThan(width(long));
+  });
 });
