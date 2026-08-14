@@ -17,3 +17,7 @@ export const SAFE_FLOOR_MIN_PCT = 15;
 export const SAFE_FLOOR_MAX_PCT = 30;
 export const SAFE_FLOOR_SPAN_C = SAFE_FLOOR_INPUT_MAX_C - SAFE_FLOOR_INPUT_MIN_C;
 
+export const DEFAULT_TEMP_BAND_C = 3;
+export const DEFAULT_MAX_HORIZON_DAYS = 120;
+export const F2_OFFSET_DAYS = 2;
+

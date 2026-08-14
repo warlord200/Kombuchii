@@ -13,6 +13,9 @@ import {
   SAFE_FLOOR_MAX_PCT,
   SAFE_FLOOR_MIN_PCT,
   SAFE_FLOOR_SPAN_C,
+  DEFAULT_TEMP_BAND_C,
+  DEFAULT_MAX_HORIZON_DAYS,
+  F2_OFFSET_DAYS,
 } from "./constants";
 
 function kelvin(tempC: number): number {
@@ -51,4 +54,64 @@ export function safeFloorPct(coldestForecastC: number): number {
 
 export function roomTemp(outdoorC: number, roomOffsetC: number): number {
   return outdoorC - roomOffsetC;
+}
+
+export interface DayTemp {
+  date: string;
+  tempC: number;
+}
+
+export interface CompletionResult {
+  f1Done: string | null;
+  f2Done: string | null;
+  window: { earliest: string | null; latest: string | null };
+}
+
+function addDaysISO(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function simulateF1(params: {
+  startDate: string;
+  days: DayTemp[];
+  starterPct: number;
+  roomOffsetC: number;
+  targetPh: number;
+  tempBandC: number;
+  maxHorizonDays: number;
+}): string | null {
+  const target = targetUnits(params.targetPh);
+  const factor = starterFactor(params.starterPct);
+  const lastTemp = params.days.length > 0 ? params.days[params.days.length - 1].tempC : null;
+  let cumulative = 0;
+  for (let i = 0; i < params.maxHorizonDays; i++) {
+    const date = addDaysISO(params.startDate, i);
+    const day = params.days.find((d) => d.date === date);
+    const outdoorC = day ? day.tempC + params.tempBandC : lastTemp;
+    if (outdoorC === null) return null;
+    cumulative += arrheniusRate(roomTemp(outdoorC, params.roomOffsetC)) * factor;
+    if (cumulative >= target) return date;
+  }
+  return null;
+}
+
+export function completionDate(params: {
+  startDate: string;
+  days: DayTemp[];
+  starterPct: number;
+  roomOffsetC: number;
+  targetPh: number;
+  tempBandC?: number;
+  maxHorizonDays?: number;
+}): CompletionResult {
+  const tempBandC = params.tempBandC ?? DEFAULT_TEMP_BAND_C;
+  const maxHorizonDays = params.maxHorizonDays ?? DEFAULT_MAX_HORIZON_DAYS;
+  const f1Done = simulateF1({ ...params, tempBandC: 0, maxHorizonDays });
+  return {
+    f1Done,
+    f2Done: f1Done === null ? null : addDaysISO(f1Done, F2_OFFSET_DAYS),
+    window: { earliest: null, latest: null },
+  };
 }
