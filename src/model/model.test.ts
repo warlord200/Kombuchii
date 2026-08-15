@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   arrheniusRate,
+  coldestTempC,
   completionDate,
   predictBatch,
   roomTemp,
@@ -88,6 +89,17 @@ describe("safeFloorPct", () => {
 describe("roomTemp", () => {
   it("subtracts the room offset from the outdoor temperature", () => {
     expect(roomTemp(25, 3)).toBe(22);
+  });
+});
+
+describe("coldestTempC", () => {
+  it("returns the coldest temperature in the range", () => {
+    const days: DayTemp[] = [
+      { date: addDays(START, 0), tempC: 20 },
+      { date: addDays(START, 1), tempC: 15 },
+      { date: addDays(START, 2), tempC: 18 },
+    ];
+    expect(coldestTempC(days)).toBe(15);
   });
 });
 
