@@ -101,6 +101,7 @@ describe("batch detail page", () => {
     expect(html).toContain("F2 2026-08-12");
     expect(html).toContain("Mold risk: low");
     expect(html).toContain("Refresh prediction");
+    expect(html).toContain("Delete batch");
     expect(html).toContain(prediction!.computedAt.toLocaleString());
   });
 

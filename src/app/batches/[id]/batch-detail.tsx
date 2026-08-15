@@ -9,7 +9,7 @@ import {
   SLIDER_MIN_PCT,
   type BatchParams,
 } from "./detail-logic";
-import { refreshPredictionAction } from "./actions";
+import { deleteBatchAction, refreshPredictionAction } from "./actions";
 
 export interface DetailPrediction {
   computedAt: string;
@@ -89,6 +89,7 @@ export function BatchDetail({
   const [sliderPct, setSliderPct] = useState(() => initialStarterPct(prediction?.scenarios ?? []));
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const params: BatchParams = { totalVolumeL, startDate: batch.startDate, roomOffsetC, targetPh };
 
@@ -116,6 +117,23 @@ export function BatchDetail({
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm(`Delete "${batch.name}"?`)) return;
+    setDeleting(true);
+    try {
+      const deleted = await deleteBatchAction(batch.id);
+      if (deleted) {
+        window.location.assign("/");
+      } else {
+        setRefreshError(true);
+      }
+    } catch {
+      setRefreshError(true);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-foreground/60">Started {batch.startDate}</p>
@@ -140,6 +158,14 @@ export function BatchDetail({
           className="border border-black/10 dark:border-white/10 rounded px-3 py-1"
         >
           {refreshing ? "Refreshing…" : "Refresh prediction"}
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="border border-red-500/40 text-red-500 rounded px-3 py-1"
+        >
+          {deleting ? "Deleting…" : "Delete batch"}
         </button>
       </div>
 
