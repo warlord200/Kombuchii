@@ -165,7 +165,7 @@ export interface Scenario {
   moldRisk: MoldRisk;
 }
 
-export function moldRisk(starterPct: number, safeFloorPctValue: number): MoldRisk {
+function moldRisk(starterPct: number, safeFloorPctValue: number): MoldRisk {
   if (starterPct < safeFloorPctValue - RISK_MEDIUM_BAND_PP) return "high";
   if (starterPct < safeFloorPctValue) return "medium";
   return "low";

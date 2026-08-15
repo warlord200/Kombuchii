@@ -204,6 +204,13 @@ describe("predictBatch", () => {
     expect(high[0].moldRisk).toBe("high");
   });
 
+  it("treats the band boundaries (safeFloor − 5pp and safeFloor) as medium and low", () => {
+    const atMediumFloor = predictBatch(input22(0.175));
+    const atSafeFloor = predictBatch(input22(0.225));
+    expect(atMediumFloor[0].moldRisk).toBe("medium");
+    expect(atSafeFloor[0].moldRisk).toBe("low");
+  });
+
   it("completes the safest scenario no later than chosen at a higher starter", () => {
     const result = predictBatch(input22(0.15));
     const [chosen, safest] = result;
@@ -211,5 +218,7 @@ describe("predictBatch", () => {
     expect(safest.f1Done).not.toBeNull();
     expect(chosen.f1Done).not.toBeNull();
     expect(safest.f1Done! <= chosen.f1Done!).toBe(true);
+    expect(safest.f2Done! <= chosen.f2Done!).toBe(true);
+    expect(safest.window.latest! <= chosen.window.latest!).toBe(true);
   });
 });
