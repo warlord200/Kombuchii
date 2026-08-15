@@ -67,16 +67,16 @@ describe("starterFactor", () => {
 });
 
 describe("targetUnits", () => {
-  it("maps pH 3.0 to 10 units", () => {
-    expect(targetUnits(3.0)).toBe(10);
+  it("maps pH 3.0 to 8 units", () => {
+    expect(targetUnits(3.0)).toBe(8);
   });
 
-  it("maps pH 2.5 to the 12.5 upper clamp", () => {
-    expect(targetUnits(2.5)).toBe(12.5);
+  it("maps pH 2.5 to the 10 upper clamp", () => {
+    expect(targetUnits(2.5)).toBe(10);
   });
 
-  it("maps pH 3.5 to the 7.5 lower clamp", () => {
-    expect(targetUnits(3.5)).toBe(7.5);
+  it("maps pH 3.5 to the 6 lower clamp", () => {
+    expect(targetUnits(3.5)).toBe(6);
   });
 });
 
@@ -123,11 +123,11 @@ describe("completionDate", () => {
     targetPh: 3.0,
   };
 
-  it("reaches F1 in ~10 days at constant 25°C with 20% starter, pH 3.0", () => {
+  it("reaches F1 in ~8 days at constant 25°C with 20% starter, pH 3.0", () => {
     const days = makeDays({});
     const result = completionDate({ ...base, days });
-    expect(result.f1Done).toBe(addDays(START, 9));
-    expect(result.f2Done).toBe(addDays(START, 11));
+    expect(result.f1Done).toBe(addDays(START, 7));
+    expect(result.f2Done).toBe(addDays(START, 9));
   });
 
   it("stretches F1 beyond the flat case when days 3–5 run 10°C colder", () => {
@@ -149,7 +149,7 @@ describe("completionDate", () => {
   it("extends past the forecast by repeating the last known temp", () => {
     const days = makeDays({}, 5);
     const result = completionDate({ ...base, days });
-    expect(result.f1Done).toBe(addDays(START, 9));
+    expect(result.f1Done).toBe(addDays(START, 7));
   });
 
   it("returns null when never reached within maxHorizonDays", () => {
@@ -181,6 +181,20 @@ describe("completionDate", () => {
     const width = (r: ReturnType<typeof completionDate>) =>
       new Date(r.window.latest!).getTime() - new Date(r.window.earliest!).getTime();
     expect(width(short)).toBeLessThan(width(long));
+  });
+});
+
+describe("real-world calibration", () => {
+  it("finishes a 10% starter, pH 3.1 batch at 28°C room in about 8–9 days", () => {
+    const days = makeConstantDays(28);
+    const result = completionDate({
+      startDate: START,
+      days,
+      starterPct: 10,
+      roomOffsetC: 0,
+      targetPh: 3.1,
+    });
+    expect(result.f1Done).toBe(addDays(START, 8));
   });
 });
 

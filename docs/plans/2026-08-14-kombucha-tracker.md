@@ -23,7 +23,7 @@
 - Ea = 52_844 J/mol, R = 8.314, refTemp = 25°C
 - `arrheniusRate(tempC) = exp(−Ea/R · (1/(tempC+273.15) − 1/298.15))` → 1.0 at 25°C, ≈2.0 at 35°C, ≈0.48 at 15°C (Q10 ≈ 2)
 - `starterFactor(pct) = √(pct / 20)` — diminishing returns: 10%→0.71, 30%→1.22
-- `targetUnits(pH) = clamp(25 − 5·pH, 7.5, 12.5)` — days-at-25°C-20%: pH3.0→10, 3.5→7.5, 2.5→12.5
+- `targetUnits(pH) = clamp(20 − 4·pH, 6, 10)` — days-at-25°C-20%: pH3.0→8, 3.5→6, 2.5→10 (calibrated: 10% starter, ~28°C room, 8–9 days to pH 3.1)
 - `safeFloorPct(coldestC) = clamp to [20,24], then 30 − 15·((coldestC−20)/4)` — 24°C→15%, 20°C→30%
 - window band = ±3°C on every remaining forecast day → [pessimistic, optimistic] completion
 - `cumulativeUnits += arrheniusRate(roomTemp(day)) · starterFactor(pct)`, F1 done when ≥ targetUnits

@@ -6,10 +6,10 @@ export const REFERENCE_TEMP_K = REFERENCE_TEMP_C + KELVIN_OFFSET;
 
 export const STARTER_FACTOR_REFERENCE_PCT = 20;
 
-export const TARGET_UNITS_MIN = 7.5;
-export const TARGET_UNITS_MAX = 12.5;
-export const TARGET_UNITS_SLOPE_PER_PH = 5;
-export const TARGET_UNITS_INTERCEPT = 25;
+export const TARGET_UNITS_MIN = 6;
+export const TARGET_UNITS_MAX = 10;
+export const TARGET_UNITS_SLOPE_PER_PH = 4;
+export const TARGET_UNITS_INTERCEPT = 20;
 
 export const SAFE_FLOOR_INPUT_MIN_C = 20;
 export const SAFE_FLOOR_INPUT_MAX_C = 24;

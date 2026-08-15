@@ -60,7 +60,7 @@ The model is a pure, unit-tested TypeScript module in `src/model/` with no I/O �
 
 - **Arrhenius rate** (`arrheniusRate`): `exp(−Ea/R · (1/(tempC+273.15) − 1/298.15))` with `Ea = 52 844 J/mol` and `R = 8.314`. Equal to 1.0 at 25 °C, ≈ 2.0 at 35 °C, ≈ 0.48 at 15 °C (Q10 ≈ 2).
 - **Starter factor** (`starterFactor`): `√(pct/20)` — diminishing returns; 10% → 0.71, 30% → 1.22.
-- **Target units** (`targetUnits`): `clamp(25 − 5·pH, 7.5, 12.5)` — days-at-25°C-20% equivalents; pH 3.0 → 10, pH 3.5 → 7.5, pH 2.5 → 12.5.
+- **Target units** (`targetUnits`): `clamp(20 − 4·pH, 6, 10)` — days-at-25°C-20% equivalents; pH 3.0 → 8, pH 3.5 → 6, pH 2.5 → 10. Calibrated against a real 10%-starter batch fermenting at ~28 °C room temperature in 8–9 days (pH 3.1).
 - **Safe floor** (`safeFloorPct`): the minimum starter percentage to keep mold risk low, scaling with the coldest forecast temperature: clamp coldest to [20, 24] °C, then `30 − 15·((coldestC − 20)/4)`. 24 °C → 15%, 20 °C → 30%.
 - **Room temperature**: `outdoorC − roomOffsetC` (per-batch offset, default 3.0).
 - **Daily integration**: `cumulative += arrheniusRate(roomTemp(day)) · starterFactor(pct)`, starting from `startDate`; F1 is done on the first day the cumulative total reaches `targetUnits(pH)`.

@@ -60,6 +60,13 @@ describe("dashboard", () => {
     expect(html).toContain("Second Brew");
   });
 
+  function windowText(name: string, days: DayTemp[], offsetDays: number): string {
+    const chosen = predictBatch({ ...batchInput(name), days }).find(
+      (s) => s.label === "chosen",
+    )!;
+    return `${addDays(chosen.window.earliest!, offsetDays)} – ${addDays(chosen.window.latest!, offsetDays)}`;
+  }
+
   it("shows a later completion window for a cold forecast than a warm one", async () => {
     const warm = await createBatch(batchInput("Warm Batch"));
     await upsertPrediction(
@@ -76,10 +83,15 @@ describe("dashboard", () => {
 
     const html = await renderHome();
 
-    expect(html).toContain("2026-08-09 – 2026-08-13");
-    expect(html).toContain("2026-08-11 – 2026-08-15");
-    expect(html).toContain("2026-09-02 – 2026-09-14");
-    expect(html).toContain("2026-09-04 – 2026-09-16");
+    const warmF1 = windowText("Warm Batch", WARM_DAYS, 0);
+    const warmF2 = windowText("Warm Batch", WARM_DAYS, 2);
+    const coldF1 = windowText("Cold Batch", COLD_DAYS, 0);
+    const coldF2 = windowText("Cold Batch", COLD_DAYS, 2);
+    expect(html).toContain(warmF1);
+    expect(html).toContain(warmF2);
+    expect(html).toContain(coldF1);
+    expect(html).toContain(coldF2);
+    expect(coldF1 > warmF1).toBe(true);
     expect(html).toMatch(/<span[^>]*>F1<\/span>/);
     expect(html).toMatch(/<span[^>]*>F2<\/span>/);
   });
