@@ -14,10 +14,12 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "next": "15.5.23",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -26,9 +28,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
-    "prisma": "^7.9.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.23",
+    "prisma": "^7.9.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
