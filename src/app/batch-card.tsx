@@ -1,4 +1,5 @@
 import type { DayTemp, Scenario } from "@/model/model";
+import Link from "next/link";
 import { F2_OFFSET_DAYS } from "@/model/constants";
 
 export interface CardPrediction {
@@ -52,7 +53,10 @@ export function BatchCard({ batch }: { batch: CardBatch }) {
   const updated = formatLastUpdated(batch.prediction);
 
   return (
-    <article className="border border-black/10 dark:border-white/10 rounded-lg p-4">
+    <Link
+      href={`/batches/${batch.id}`}
+      className="block border border-black/10 dark:border-white/10 rounded-lg p-4 hover:bg-foreground/[0.02]"
+    >
       <h2 className="font-medium text-lg">{batch.name}</h2>
       <p className="text-sm text-foreground/60">
         Started {batch.startDate.toISOString().slice(0, 10)}
@@ -70,6 +74,6 @@ export function BatchCard({ batch }: { batch: CardBatch }) {
       ) : (
         <p className="text-xs text-foreground/50">No snapshot yet</p>
       )}
-    </article>
+    </Link>
   );
 }

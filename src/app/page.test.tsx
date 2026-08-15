@@ -93,6 +93,16 @@ describe("dashboard", () => {
     expect(html).toContain("No prediction yet");
   });
 
+  it("links each card to its batch detail page", async () => {
+    const first = await createBatch(batchInput("First Brew"));
+    const second = await createBatch(batchInput("Second Brew"));
+
+    const html = await renderHome();
+
+    expect(html).toContain(`href="/batches/${first.id}"`);
+    expect(html).toContain(`href="/batches/${second.id}"`);
+  });
+
   it("shows the last-updated time from the snapshot on a card", async () => {
     const batch = await createBatch(batchInput("Timestamped"));
     await upsertPrediction(
