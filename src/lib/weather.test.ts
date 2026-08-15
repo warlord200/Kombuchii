@@ -41,13 +41,13 @@ describe("parseDailyTemps", () => {
   });
 
   it("treats missing max/min values as 0", () => {
-    const sparse = {
-      daily: {
-        time: ["2026-08-12"],
+    const sparse = Object.freeze({
+      daily: Object.freeze({
+        time: Object.freeze(["2026-08-12"]),
         temperature_2m_max: undefined,
         temperature_2m_min: undefined,
-      },
-    };
+      }),
+    });
     expect(parseDailyTemps(sparse, 1)).toEqual([{ date: "2026-08-12", tempC: 0 }]);
   });
 

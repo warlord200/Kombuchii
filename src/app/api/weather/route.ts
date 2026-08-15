@@ -3,19 +3,23 @@ import { buildWeatherUrl, parseDailyTemps } from "@/lib/weather";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const lat = Number(searchParams.get("lat"));
-  const lon = Number(searchParams.get("lon"));
-  const pastDays = Number(searchParams.get("pastDays") ?? 0);
+  const lat = searchParams.get("lat");
+  const lon = searchParams.get("lon");
+  const pastDays = searchParams.get("pastDays");
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isInteger(pastDays) || pastDays < 0) {
+  const latNum = lat === null ? Number.NaN : Number(lat);
+  const lonNum = lon === null ? Number.NaN : Number(lon);
+  const pastDaysNum = pastDays === null ? 0 : Number(pastDays);
+
+  if (!Number.isFinite(latNum) || !Number.isFinite(lonNum) || !Number.isInteger(pastDaysNum) || pastDaysNum < 0) {
     return NextResponse.json({ error: "lat, lon, and pastDays are required" }, { status: 400 });
   }
 
-  const response = await fetch(buildWeatherUrl(lat, lon, pastDays));
+  const response = await fetch(buildWeatherUrl(latNum, lonNum, pastDaysNum));
   if (!response.ok) {
     return NextResponse.json({ error: "Open-Meteo request failed" }, { status: response.status });
   }
 
   const json: unknown = await response.json();
-  return NextResponse.json(parseDailyTemps(json, pastDays));
+  return NextResponse.json(parseDailyTemps(json, pastDaysNum));
 }
