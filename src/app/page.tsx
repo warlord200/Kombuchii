@@ -1,4 +1,5 @@
 import { getBatches } from "@/server/actions";
+import Link from "next/link";
 import { BatchCard, type CardBatch, type CardPrediction } from "./batch-card";
 
 function toCardBatch(batch: Awaited<ReturnType<typeof getBatches>>[number]): CardBatch {
@@ -17,12 +18,12 @@ export default async function Home() {
       <main className="mx-auto max-w-3xl">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">Batches</h1>
-          <a
+          <Link
             href="/batches/new"
             className="border border-black/10 dark:border-white/10 rounded px-3 py-1"
           >
             New batch
-          </a>
+          </Link>
         </div>
         {batches.length === 0 ? (
           <p className="text-foreground/60">No batches yet.</p>

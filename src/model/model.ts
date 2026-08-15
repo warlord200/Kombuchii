@@ -197,6 +197,11 @@ function buildScenario(
   };
 }
 
+export function predictChosenScenario(input: BatchInput): Scenario {
+  const safeFloorPctValue = safeFloorPct(coldestTempC(input.days));
+  return buildScenario(input, "chosen", input.starterVolumeL, safeFloorPctValue);
+}
+
 export function predictBatch(input: BatchInput): Scenario[] {
   const safeFloorPctValue = safeFloorPct(coldestTempC(input.days));
   return [

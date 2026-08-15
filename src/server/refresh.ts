@@ -6,6 +6,7 @@ import { buildWeatherUrl, parseDailyTemps } from "@/lib/weather";
 import type { DayTemp } from "../model/model";
 
 export const DEFAULT_REFRESH_CRON = "0 * * * *";
+export const SNAPSHOT_MAX_AGE_MS = 3_600_000;
 
 export type WeatherFetcher = (lat: number, lon: number, pastDays: number) => Promise<DayTemp[]>;
 

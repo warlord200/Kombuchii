@@ -4,6 +4,7 @@ import {
   coldestTempC,
   completionDate,
   predictBatch,
+  predictChosenScenario,
   roomTemp,
   safeFloorPct,
   starterFactor,
@@ -31,6 +32,17 @@ function makeConstantDays(tempC: number, length = 25): DayTemp[] {
     date: addDays(START, i),
     tempC,
   }));
+}
+
+function batchInputAt22(starterVolumeL: number) {
+  return {
+    totalVolumeL: 1,
+    starterVolumeL,
+    startDate: START,
+    roomOffsetC: 0,
+    targetPh: 3.0,
+    days: makeConstantDays(22),
+  };
 }
 
 describe("arrheniusRate", () => {
@@ -173,14 +185,7 @@ describe("completionDate", () => {
 });
 
 describe("predictBatch", () => {
-  const input22 = (starterVolumeL: number) => ({
-    totalVolumeL: 1,
-    starterVolumeL,
-    startDate: START,
-    roomOffsetC: 0,
-    targetPh: 3.0,
-    days: makeConstantDays(22),
-  });
+  const input22 = batchInputAt22;
 
   it("returns one scenario each for chosen, safest, and most-yield", () => {
     const result = predictBatch(input22(0.15));
@@ -232,5 +237,30 @@ describe("predictBatch", () => {
     expect(safest.f1Done! <= chosen.f1Done!).toBe(true);
     expect(safest.f2Done! <= chosen.f2Done!).toBe(true);
     expect(safest.window.latest! <= chosen.window.latest!).toBe(true);
+  });
+});
+
+describe("predictChosenScenario", () => {
+  const input22 = batchInputAt22;
+
+  it("returns the chosen scenario for a given starter volume", () => {
+    const result = predictChosenScenario(input22(0.3));
+    expect(result.label).toBe("chosen");
+    expect(result.starterVolumeL).toBeCloseTo(0.3, 5);
+    expect(result.starterPct).toBeCloseTo(30, 5);
+    expect(result.drinkableVolumeL).toBeCloseTo(0.7, 5);
+  });
+
+  it("completes no later as the starter volume increases", () => {
+    const low = predictChosenScenario(input22(0.15));
+    const high = predictChosenScenario(input22(0.4));
+    expect(high.f1Done! <= low.f1Done!).toBe(true);
+    expect(high.f2Done! <= low.f2Done!).toBe(true);
+  });
+
+  it("matches the chosen scenario produced by predictBatch", () => {
+    const batchChosen = predictBatch(input22(0.15))[0];
+    const direct = predictChosenScenario(input22(0.15));
+    expect(direct).toEqual(batchChosen);
   });
 });
