@@ -11,7 +11,7 @@ function toIsoDate(value: string): Date {
   return new Date(`${value}T00:00:00Z`);
 }
 
-function toIsoString(value: Date): string {
+export function toIsoString(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
