@@ -1,3 +1,4 @@
+// New batch page (server component): a thin wrapper around the client BatchForm.
 import { BatchForm } from "./batch-form";
 
 export default function NewBatchPage() {

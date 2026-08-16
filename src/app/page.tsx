@@ -1,7 +1,11 @@
+// Dashboard (server component): lists every batch newest-first, with a link to
+// create a new batch. Each card is rendered from the stored prediction snapshot
+// so the page reads from the DB without hitting the weather API.
 import { getBatches } from "@/server/actions";
 import Link from "next/link";
 import { BatchCard, type CardBatch, type CardPrediction } from "./batch-card";
 
+/** Adapts a DB-typed batch (Date/JSON columns) into the card component's props. */
 function toCardBatch(batch: Awaited<ReturnType<typeof getBatches>>[number]): CardBatch {
   return {
     id: batch.id,

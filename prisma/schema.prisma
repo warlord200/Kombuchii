@@ -1,5 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Kombuchii data model: SQLite via Prisma.
+//
+// Batch holds the user-entered brew parameters; Prediction holds the latest
+// computed prediction snapshot (one per batch). The snapshot's JSON columns
+// store the DayTemp[] array the prediction was computed from and the
+// Scenario[] array (chosen / safest / most-yield) — see src/model/model.ts.
 
 generator client {
   provider = "prisma-client"
@@ -10,28 +14,40 @@ datasource db {
   provider = "sqlite"
 }
 
+/// A single kombucha brew tracked through first and second fermentation.
 model Batch {
   id             String      @id @default(cuid())
   name           String
+  /// Total batch volume in liters.
   totalVolumeL   Float
+  /// Starter tea volume in liters (a seed for fermentation).
   starterVolumeL Float
+  /// Day fermentation began (stored as UTC midnight of the calendar date).
   startDate      DateTime
+  /// Target pH at which F1 is considered complete (2.5–3.5).
   targetPh       Float       @default(3.0)
+  /// Outdoor → room temperature offset in °C (default 3.0).
   roomOffsetC    Float       @default(3.0)
+  /// Coordinates for the weather lookup; null until the user picks a location.
   lat            Float?
   lon            Float?
   locationName   String?
+  /// The batch's latest prediction snapshot, if one has been computed yet.
   prediction     Prediction?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
 
+/// The stored prediction snapshot for a batch, refreshed hourly by the job.
 model Prediction {
   id         String   @id @default(cuid())
   batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
   batchId    String   @unique
+  /// When this snapshot was computed (used to decide if it is stale).
   computedAt DateTime
+  /// The DayTemp[] (date + °C) this prediction was computed from.
   days       Json
+  /// The Scenario[] (chosen / safest / most-yield) with F1/F2 dates and risk.
   scenarios  Json
   createdAt  DateTime @default(now())
 }

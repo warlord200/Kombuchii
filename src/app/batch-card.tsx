@@ -1,7 +1,11 @@
+// Batch card for the dashboard list: one link per batch showing its name, start
+// date, and the F1/F2 completion window from the stored prediction snapshot
+// (or a "no prediction yet" placeholder).
 import type { DayTemp, Scenario } from "@/model/model";
 import Link from "next/link";
 import { F2_OFFSET_DAYS } from "@/model/constants";
 
+/** Serializable prediction snapshot as stored in the DB JSON columns. */
 export interface CardPrediction {
   computedAt: Date;
   days: DayTemp[];
@@ -15,12 +19,14 @@ export interface CardBatch {
   prediction: CardPrediction | null;
 }
 
+/** Adds a number of days to an ISO date string, working in UTC. */
 function addDaysISO(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
+/** The chosen scenario's completion window from the snapshot, or null. */
 function chosenWindow(
   prediction: CardPrediction | null,
 ): { earliest: string | null; latest: string | null } | null {
@@ -29,6 +35,11 @@ function chosenWindow(
   return chosen?.window ?? null;
 }
 
+/**
+ * Formats the chosen scenario's completion window as "earliest – latest",
+ * shifted by `offsetDays` (0 for F1, F2_OFFSET_DAYS for F2). Returns a
+ * placeholder when no window is available.
+ */
 export function completionWindowText(
   prediction: CardPrediction | null,
   offsetDays: number,
@@ -42,6 +53,7 @@ export function completionWindowText(
   return `${earliest} – ${latest}`;
 }
 
+/** Human-readable "last updated" time from the snapshot, or null. */
 export function formatLastUpdated(prediction: CardPrediction | null): string | null {
   if (prediction === null) return null;
   return prediction.computedAt.toLocaleString();

@@ -1,3 +1,6 @@
+// Database client setup. Uses a singleton PrismaClient stored on `globalThis`
+// so hot-reloading in development does not leak a new SQLite connection on
+// every module re-evaluation.
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@/generated/prisma/client";
 

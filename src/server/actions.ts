@@ -1,20 +1,32 @@
+// Batch and prediction persistence layer. All writes are validated with zod
+// before touching Prisma, and every function that returns a batch includes its
+// prediction snapshot so callers get the full picture in one query.
+//
+// Dates are stored as Date columns but travel across the model layer as
+// "YYYY-MM-DD" ISO strings (see toIsoString / toIsoDate); the model itself only
+// ever deals with strings.
+
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "./db";
 import type { DayTemp, Scenario } from "../model/model";
 
+/** Casts model objects to Prisma's Json column type (columns store JSON text). */
 function asJson(value: DayTemp[] | Scenario[]): Prisma.InputJsonValue {
   return value as unknown as Prisma.InputJsonValue;
 }
 
+/** Converts a "YYYY-MM-DD" string into a UTC midnight Date for storage. */
 function toIsoDate(value: string): Date {
   return new Date(`${value}T00:00:00Z`);
 }
 
+/** Converts a stored Date into a "YYYY-MM-DD" string (UTC), dropping the time. */
 export function toIsoString(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
+/** True only for real, round-trip-able calendar dates in "YYYY-MM-DD" form. */
 function isValidIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
@@ -37,6 +49,7 @@ interface BatchShape {
   locationName: string | null;
 }
 
+/** Maps a validated batch shape into the column layout Prisma expects. */
 function toBatchData(input: BatchShape) {
   return {
     name: input.name,
@@ -51,6 +64,9 @@ function toBatchData(input: BatchShape) {
   };
 }
 
+// Field-level validation shared by create and update. pH is restricted to the
+// 2.5–3.5 range the model is calibrated for; lat/lon are optional because a
+// batch may be created before a location is chosen.
 const batchFieldDefs = {
   name: z.string().trim().min(1, "name is required"),
   totalVolumeL: z.number().positive("totalVolumeL must be positive"),
@@ -63,6 +79,7 @@ const batchFieldDefs = {
   locationName: z.string().nullable().optional(),
 };
 
+// Create requires every field, filling sensible defaults for pH and room offset.
 const createBatchSchema = z
   .object({
     ...batchFieldDefs,
@@ -74,6 +91,8 @@ const createBatchSchema = z
     path: ["starterVolumeL"],
   });
 
+// Update accepts any subset of fields; the starter-vs-total check only runs
+// when both fields are present in the patch.
 const updateBatchSchema = z
   .object(batchFieldDefs)
   .partial()
@@ -90,6 +109,7 @@ const updateBatchSchema = z
 export type CreateBatchInput = z.input<typeof createBatchSchema>;
 export type UpdateBatchInput = z.input<typeof updateBatchSchema>;
 
+/** Validates and creates a batch (with its — initially empty — prediction slot). */
 export async function createBatch(input: CreateBatchInput) {
   const data = createBatchSchema.parse(input);
   return prisma.batch.create({
@@ -108,6 +128,7 @@ export async function createBatch(input: CreateBatchInput) {
   });
 }
 
+/** Lists all batches, newest first, each with its prediction snapshot. */
 export async function getBatches() {
   return prisma.batch.findMany({
     orderBy: { createdAt: "desc" },
@@ -115,6 +136,7 @@ export async function getBatches() {
   });
 }
 
+/** Fetches one batch with its prediction snapshot, or null if it doesn't exist. */
 export async function getBatch(id: string) {
   return prisma.batch.findUnique({
     where: { id },
@@ -122,6 +144,11 @@ export async function getBatch(id: string) {
   });
 }
 
+/**
+ * Validates a partial patch, merges it over the stored batch, re-validates the
+ * merged result as a full create, then persists. Returns null when the batch
+ * does not exist.
+ */
 export async function updateBatch(id: string, input: UpdateBatchInput) {
   const patch = updateBatchSchema.parse(input);
   const existing = await prisma.batch.findUnique({ where: { id } });
@@ -147,15 +174,26 @@ export async function updateBatch(id: string, input: UpdateBatchInput) {
   });
 }
 
+/**
+ * Deletes a batch (its prediction is removed by the onDelete: Cascade).
+ * Returns true when a row was actually deleted.
+ */
 export async function deleteBatch(id: string): Promise<boolean> {
   const { count } = await prisma.batch.deleteMany({ where: { id } });
   return count > 0;
 }
 
+/** Fetches one batch's prediction snapshot, or null if none exists yet. */
 export async function getPrediction(batchId: string) {
   return prisma.prediction.findUnique({ where: { batchId } });
 }
 
+/**
+ * Stores (or replaces) the prediction snapshot for a batch: the DayTemp array
+ * it was computed from and the computed scenarios, stamped with the current
+ * time. This is the single write path for the hourly refresh job, the manual
+ * "Refresh prediction" button, and recompute-on-read.
+ */
 export async function upsertPrediction(batchId: string, days: DayTemp[], scenarios: Scenario[]) {
   const computedAt = new Date();
   return prisma.prediction.upsert({

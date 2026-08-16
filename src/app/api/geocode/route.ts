@@ -1,3 +1,5 @@
+// Geocoding API route: proxies Open-Meteo's geocoding search so the client form
+// can resolve a city name to coordinates without CORS or an API key.
 import { NextResponse } from "next/server";
 import { parseGeocode } from "@/lib/weather";
 
@@ -17,5 +19,6 @@ export async function GET(request: Request) {
   }
 
   const json: unknown = await response.json();
+  // Returns { lat, lon, name } for the first match, or null when none found.
   return NextResponse.json(parseGeocode(json));
 }

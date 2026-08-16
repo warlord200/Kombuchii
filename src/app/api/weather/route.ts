@@ -1,3 +1,6 @@
+// Weather API route: proxies Open-Meteo's forecast into the model's DayTemp
+// list. Used by the new-batch form to show the safe-floor hint for a chosen
+// location before the batch is created.
 import { NextResponse } from "next/server";
 import { buildWeatherUrl, parseDailyTemps } from "@/lib/weather";
 

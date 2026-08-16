@@ -1,3 +1,6 @@
+// Batch detail page (server component). Loads the batch with a fresh prediction
+// snapshot, adapts the Prisma-typed prediction into the client component's
+// serializable shape, and renders the interactive BatchDetail.
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BatchDetail, type DetailPrediction } from "./batch-detail";
@@ -8,6 +11,7 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+/** Adapts the DB-typed prediction (Date + JSON columns) into plain serializable values. */
 function toDetailPrediction(prediction: {
   computedAt: Date;
   days: unknown;

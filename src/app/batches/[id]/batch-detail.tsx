@@ -1,5 +1,11 @@
 "use client";
 
+// Batch detail page client component. Shows one card per scenario (chosen /
+// safest / most-yield) computed from the prediction snapshot. The "chosen" card
+// is recomputed live in the browser as the starter slider moves, while the
+// other two cards stay fixed to the snapshot. Also exposes the Refresh and
+// Delete batch actions.
+
 import { useState } from "react";
 import type { DayTemp, MoldRisk, Scenario } from "@/model/model";
 import {
@@ -11,6 +17,7 @@ import {
 } from "./detail-logic";
 import { deleteBatchAction, refreshPredictionAction } from "./actions";
 
+/** Serializable prediction snapshot as delivered by the server action. */
 export interface DetailPrediction {
   computedAt: string;
   days: DayTemp[];
@@ -25,18 +32,21 @@ interface BatchDetailProps {
   prediction: DetailPrediction | null;
 }
 
+/** Display titles for the three scenario labels. */
 const SCENARIO_TITLES: Record<string, string> = {
   chosen: "Chosen",
   safest: "Safest",
   "most-yield": "Most yield",
 };
 
+/** Tailwind classes per mold-risk level, used to color the risk badge. */
 const RISK_STYLES: Record<MoldRisk, string> = {
   low: "border-green-600/40 bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-200",
   medium: "border-yellow-600/40 bg-yellow-100 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-200",
   high: "border-red-600/40 bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200",
 };
 
+/** Formats a scenario's completion window, or a placeholder when absent. */
 function formatWindow(scenario: Scenario): string {
   if (scenario.window.earliest === null || scenario.window.latest === null) {
     return "No prediction";
@@ -44,10 +54,12 @@ function formatWindow(scenario: Scenario): string {
   return `${scenario.window.earliest} – ${scenario.window.latest}`;
 }
 
+/** Formats the snapshot's computedAt timestamp for display. */
 function formatLastUpdated(computedAt: string): string {
   return new Date(computedAt).toLocaleString();
 }
 
+/** Renders one scenario card: starter %, yield, F1 window, F2 date, risk badge. */
 function ScenarioCard({ scenario, updated }: { scenario: Scenario | null; updated: string }) {
   return (
     <article className="border border-black/10 dark:border-white/10 rounded-lg p-4 flex flex-col gap-1">
@@ -85,14 +97,19 @@ export function BatchDetail({
   targetPh,
   prediction,
 }: BatchDetailProps) {
+  // snapshot holds the latest prediction; the server-provided prediction is the
+  // initial value and gets replaced whenever a refresh succeeds.
   const [snapshot, setSnapshot] = useState<DetailPrediction | null>(prediction);
+  // The starter % slider position driving the live "chosen" recompute.
   const [sliderPct, setSliderPct] = useState(() => initialStarterPct(prediction?.scenarios ?? []));
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Fixed batch inputs for this session; the slider supplies starterVolumeL.
   const params: BatchParams = { totalVolumeL, startDate: batch.startDate, roomOffsetC, targetPh };
 
+  // Live recompute of the chosen card at the current slider position.
   const chosen = snapshot === null ? null : chosenScenarioAt(params, snapshot, sliderPct);
 
   function scenarioFor(label: "chosen" | "safest" | "most-yield"): Scenario | null {

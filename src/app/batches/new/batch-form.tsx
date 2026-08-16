@@ -1,5 +1,8 @@
 "use client";
 
+// New batch form (client component): collects the batch's details, lets the
+// user search for a city (which geocodes to lat/lon and pulls a forecast to
+// show the safe-floor hint), then creates the batch and redirects to its page.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -17,15 +20,19 @@ export function BatchForm() {
   const router = useRouter();
   const [form, setForm] = useState<BatchFormState>(defaultFormState);
   const [cityQuery, setCityQuery] = useState("");
+  // Safe-floor hint once a location's forecast has been fetched.
   const [safeFloor, setSafeFloor] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Live starter % readout shown under the volume fields.
   const pct = starterPct(form.totalVolumeL, form.starterVolumeL);
 
   function updateField<K extends keyof BatchFormState>(key: K, value: BatchFormState[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  // City search: geocode the query to lat/lon, then fetch a forecast to show
+  // the safe-floor hint for that location.
   async function searchCity() {
     setError(null);
     setSafeFloor(null);
@@ -57,6 +64,7 @@ export function BatchForm() {
     }
   }
 
+  // Submit creates the batch server-side, then navigates to its detail page.
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
